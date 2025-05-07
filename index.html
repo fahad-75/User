@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>تسجيل بيانات المستخدم</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
+    label { display: block; margin: 1em 0 0.5em; }
+    input, button { width: 100%; padding: 0.5em; box-sizing: border-box; }
+    .error { color: red; font-size: 0.9em; }
+    .msg { margin-top: 1em; color: green; }
+  </style>
+</head>
+<body>
+  <h2>سجل بياناتك</h2>
+  <form id="userForm" novalidate>
+    <label>الاسم:
+      <input type="text" name="user_name" required minlength="3" />
+      <div class="error" id="err-name"></div>
+    </label>
+    <label>البريد الإلكتروني:
+      <input type="email" name="user_email" required />
+      <div class="error" id="err-email"></div>
+    </label>
+    <label>رقم الجوال:
+      <input type="tel" name="user_phone" required pattern="^05[0-9]{8}$" />
+      <div class="error" id="err-phone"></div>
+    </label>
+    <button type="submit">إرسال</button>
+    <p class="msg" id="msg"></p>
+  </form>
+
+  <script>
+    const form = document.getElementById('userForm');
+    const msg  = document.getElementById('msg');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      // مسح رسائل الخطأ
+      document.querySelectorAll('.error').forEach(el => el.textContent = '');
+      msg.textContent = '';
+
+      // التحقق من صلاحية HTML5
+      if (!form.checkValidity()) {
+        // عرض رسائل الأخطاء الافتراضية
+        ['user_name','user_email','user_phone'].forEach(name => {
+          const inp = form[name];
+          if (!inp.checkValidity())
+            document.getElementById('err-' + name.split('_')[1])
+                    .textContent = inp.validationMessage;
+        });
+        return;
+      }
+
+      // جمع البيانات
+      const data = new URLSearchParams(new FormData(form));
+
+      try {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbyVOYL3TyHO_2GhFEGh4YHCNP3i8Zs1EnHG4vRCm0ISzt2j-AxnLnaz2Y2z3HIStlDPPw/exec', {
+          method: 'POST',
+          body: data
+        });
+        const text = await res.text();
+        if (text === 'SUCCESS') {
+          msg.textContent = 'تم الحفظ بنجاح في Google Sheets!';
+          form.reset();
+        } else {
+          throw new Error(text);
+        }
+      } catch (err) {
+        msg.textContent = 'حدث خطأ يرجى المحاولة لاحقاً.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
